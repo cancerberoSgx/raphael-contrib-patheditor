@@ -19,6 +19,9 @@ pathEd.setChangeEvent(function(ctx){
  * @author: sgurin 
  */
 (function(){
+	
+	var ns = {}; 
+	raphaelpatheditor=ns;
 
 	var EditorContext = function(editorSet, legendSet){
 		this.editor=editorSet;
@@ -109,7 +112,7 @@ pathEd.setChangeEvent(function(ctx){
     //L - lineto
     var buildLineToCmdEditor = function(context, cmd) {
         var paper = context.shape.paper; 
-        var c = paper.circle(cmd[1], cmd[2], 5).attr({fill: context.commandEditors["L"]["bgColor"]}); 
+        var c = createCmdShape([cmd[1], cmd[2]], context, cmd, "L");//c = paper.circle(cmd[1], cmd[2], 5).attr({fill: context.commandEditors["L"]["bgColor"]}); 
         var ctx = {"pathObject": context.pathObject, "shape": context.shape, 
             "feedback": c, "cmd": cmd}; 
         c.drag(function_throttle(context.dragThrottle, 
@@ -133,7 +136,7 @@ pathEd.setChangeEvent(function(ctx){
     //M - moveto
     var buildMoveToCmdEditor = function(context, cmd) {
         var paper = context.shape.paper; 
-        var c = paper.circle(cmd[1], cmd[2], 5).attr({fill: context.commandEditors["M"]["bgColor"]});            
+        var c = createCmdShape([cmd[1], cmd[2]], context, cmd, "M");//paper.circle(cmd[1], cmd[2], 5).attr({fill: context.commandEditors["M"]["bgColor"]});            
         var ctx = {"pathObject": context.pathObject, "shape": context.shape, 
             "feedback": c, "cmd": cmd}
         c.drag(function_throttle(context.dragThrottle, 
@@ -158,7 +161,7 @@ pathEd.setChangeEvent(function(ctx){
     //H horizontal line
     var buildHLineToCmdEditor = function(context, cmd) {
         var paper = context.shape.paper; 
-        var c = paper.circle(cmd[1], 50, 5).attr({fill: context.commandEditors["H"]["bgColor"]});            
+        var c = createCmdShape([cmd[1], 50], context, cmd, "H");//paper.circle(cmd[1], 50, 5).attr({fill: context.commandEditors["H"]["bgColor"]});            
         var ctx = {"pathObject": context.pathObject, "shape": context.shape, 
             "feedback": c, "cmd": cmd}
         c.drag(function_throttle(context.dragThrottle, 
@@ -182,7 +185,7 @@ pathEd.setChangeEvent(function(ctx){
     //V - vertical line
     var buildVLineToCmdEditor = function(context, cmd) {
         var paper = context.shape.paper; 
-        var c = paper.circle(50, cmd[1], 5).attr({fill: context.commandEditors["V"]["bgColor"]});            
+        var c = createCmdShape([50, cmd[1]], context, cmd, "V");//paper.circle(50, cmd[1], 5).attr({fill: context.commandEditors["V"]["bgColor"]});            
         var ctx = {"pathObject": context.pathObject, "shape": context.shape, 
             "feedback": c, "cmd": cmd}
         c.drag(function_throttle(context.dragThrottle, 
@@ -207,7 +210,7 @@ pathEd.setChangeEvent(function(ctx){
     var buildCurveToCmdEditor = function(context, cmd) {
         var paper = context.shape.paper; 
         var set = paper.set(); 
-        var c1 = paper.circle(cmd[1], cmd[2], 5).attr({fill: context.commandEditors["C"]["bgColor"]});            
+        var c1 = createCmdShape([cmd[1], cmd[2]], context, cmd, "C"); //paper.circle(cmd[1], cmd[2], 5).attr({fill: context.commandEditors["C"]["bgColor"]});            
         var ctx1 = {"pathObject": context.pathObject, "shape": context.shape, 
             "feedback": c1, "cmd": cmd}
         c1.drag(function_throttle(context.dragThrottle, 
@@ -227,7 +230,7 @@ pathEd.setChangeEvent(function(ctx){
         );
         set.push(c1);
         
-        var c2 = paper.circle(cmd[3], cmd[4], 5).attr({fill: context.commandEditors["C"]["bgColor"]});            
+        var c2 = createCmdShape([cmd[3], cmd[4]], context, cmd, "C");//paper.circle(cmd[3], cmd[4], 5).attr({fill: context.commandEditors["C"]["bgColor"]});            
         var ctx2 = {"pathObject": context.pathObject, "shape": context.shape, 
             "feedback": c2, "cmd": cmd}
         c2.drag(function_throttle(context.dragThrottle, 
@@ -246,7 +249,7 @@ pathEd.setChangeEvent(function(ctx){
             }, ctx2, ctx2, ctx2
         );
         set.push(c2);        
-        var c3 = paper.circle(cmd[5], cmd[6], 5).attr({fill: context.commandEditors["C"]["bgColor"]});            
+        var c3 = createCmdShape([cmd[5], cmd[6]], context, cmd, "C");// paper.circle(cmd[5], cmd[6], 5).attr({fill: context.commandEditors["C"]["bgColor"]});            
         var ctx3 = {"pathObject": context.pathObject, "shape": context.shape, 
             "feedback": c3, "cmd": cmd}
         c3.drag(function_throttle(context.dragThrottle, 
@@ -268,13 +271,26 @@ pathEd.setChangeEvent(function(ctx){
         return set;
     }; 
     
+    var createCmdShape = function(center, context, cmd, shapeType) {
+    	var shape = context.shape.paper.circle(center[0], center[1], 5).attr({
+    		fill: context.commandEditors[shapeType]["bgColor"]
+    	});
+    	return shape;
+    }; 
+   
+    
     //S - smooth curveto
     var buildSCurveToCmdEditor = function(context, cmd) {
         var paper = context.shape.paper; 
         var set = paper.set(); 
-        var c1 = paper.circle(cmd[1], cmd[2], 5).attr({fill: context.commandEditors["S"]["bgColor"]});            
-        var ctx1 = {"pathObject": context.pathObject, "shape": context.shape, 
-            "feedback": c1, "cmd": cmd}
+     
+        var c1 = createCmdShape([cmd[1], cmd[2]], context, cmd, "S"); //paper.circle(cmd[1], cmd[2], 5).attr({fill: context.commandEditors["S"]["bgColor"]});            
+        var ctx1 = {
+        	"pathObject": context.pathObject, 
+        	"shape": context.shape, 
+            "feedback": c1, 
+            "cmd": cmd
+        }
         c1.drag(function_throttle(context.dragThrottle, 
             function(dx, dy){ /*move*/
                 var x = this.ox+dx, y = this.oy+dy; 
@@ -292,7 +308,7 @@ pathEd.setChangeEvent(function(ctx){
         );
         set.push(c1);
         
-        var c2 = paper.circle(cmd[3], cmd[4], 5).attr({fill: context.commandEditors["S"]["bgColor"]});            
+        var c2 = createCmdShape([cmd[3], cmd[4]], context, cmd, "S");//paper.circle(cmd[3], cmd[4], 5).attr({fill: context.commandEditors["S"]["bgColor"]});            
         var ctx2 = {"pathObject": context.pathObject, "shape": context.shape, 
             "feedback": c2, "cmd": cmd}
         c2.drag(function_throttle(context.dragThrottle, 
