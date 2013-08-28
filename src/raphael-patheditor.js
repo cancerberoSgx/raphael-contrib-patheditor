@@ -4,7 +4,7 @@
  * a path editor for be able of edit the path commands dragging its points.
  * 
  * TODO: 
- * -visual feedback of the path segment / command being edited. 
+ * - visual feedback of the path segment / command being edited. 
  * 
  * 
 //now the example
@@ -21,58 +21,10 @@ pathEd.setChangeEvent(function(ctx){
 (function(){
 	
 	var ns = {}; 
+	
 	raphaelpatheditor=ns;
 
-	var EditorContext = function(editorSet, legendSet){
-		this.editor=editorSet;
-		this.legend=legendSet; 
-	}; 
-	EditorContext.prototype =  {
-        doCreateNewCommand: function() {
-        }
-    ,	setChangeListener: function(fn) {    		
-    	}
-    }; 
-    
-    /**
-     * installs a new path editor on this path. 
-     * 
-     * cfg is an object with following parameters :
-     * commandEditors - colors and names for each path cmd
-     * dragThrottle - the dragThrottle in ms - default 80.
-     * 
-     */
-    Raphael.el.installPathEditor = function(cfg) {
-        cfg = !cfg ? {} : cfg; 
-        if(!this.type || this.type!="path" || !this.attr("path")) 
-            return; 
-        var pathObject = Raphael.parsePathString(this.attr("path")); 
-        
-        var context = {
-            "pathObject": pathObject, 
-            "shape": this, 
-            "commandEditors" : cfg.commandEditors ? cfg.commandEditors : commandEditors, 
-            "dragThrottle": cfg.dragThrottle ? dragThrottle : 80
-        }
-        var editorSet = this.paper.set(), 
-            legendSet=this.paper.set(); 
-        for ( var i = 0; i < pathObject.length; i++) {
-            var cmd = pathObject[i]; 
-            var cmdEditShape = buildPathCmdEditorFor(context, cmd); 
-        }
-        
-        //build legend set
-        var y = 10; 
-        for(var i in context.commandEditors) {
-            paper.circle(10, y, 5).attr({fill: context.commandEditors[i]["bgColor"]}); 
-            paper.text(30, y, context.commandEditors[i]["description"]).attr({"text-anchor": "start"}); 
-            y+=25; 
-        }
-        var ctx = new EditorContext(editorSet, legendSet); 
-        this.__editorCtx=ctx;        
-        return ctx; 
-    }; 
-    //default editor config
+    //default editor config - configurable property, see @installPathEditor
     var commandEditors = {
         "L": {"bgColor": "#ededed", "textColor": "black", "name": "L", description: "line to"},
         "M": {"bgColor": "#111111", "textColor": "white", "name": "M", description: "move to"},
@@ -82,6 +34,85 @@ pathEd.setChangeEvent(function(ctx){
         "S": {"bgColor": "#1111ff", "textColor": "black", "name": "S", description: "smooth curve to"},
         "Q": {"bgColor": "orange", "textColor": "black", "name": "Q", description: "quadratic Bézier curve to"}
     }; 
+    
+	var extendObject=function(children, parent) {
+		for(var i in parent) { //don't want to use , hasOwnProperty()
+			children[i] = parent[i]; 
+		}
+	}
+
+	/**
+	 * @class EditorContext - returned to the user when an editor is installed in a shape, 
+	 * It serves as the main entry point for talking to that shape's installed editor. 
+	 */
+	var EditorContext = function(context){
+		extendObject(this, context); 
+	}; 
+	EditorContext.prototype =  {
+		/**
+		 * 
+		 * the user is responsible of triggering this handler when (user defined) action is performed
+		 * @param createCommand an object with the following information: {index: 5, cmd: ["M", 1, 2] }
+		 */
+        doCreateNewCommand: function(createCommand) {
+        }
+		/**
+		 * register a function that will be notified when this editor model's change
+		 */
+    ,	setChangeListener: function(fn) {    		
+    	}
+    }; 
+    
+    /**
+     * installs a new path editor on this path. 
+     * 
+     * @param cfg is an object with following parameters :
+     * commandEditors - colors and names for each path cmd
+     * dragThrottle - the dragThrottle in ms - default 80.
+     * 
+     * @return
+     * an EditorContext object
+     * 
+     */
+    Raphael.el.installPathEditor = function(cfg) {
+        cfg = !cfg ? {} : cfg; 
+        if(!this.type || this.type!="path" || !this.attr("path")) 
+            return; 
+        var pathObject = Raphael.parsePathString(this.attr("path")); 
+        
+       
+        var editorSet = this.paper.set(), 
+            legendSet=this.paper.set(); 
+
+        var context = {
+//    		"editorSet": editorSet,
+//    		"legendSet": legendSet,
+            "pathObject": pathObject, 
+            "shape": this, 
+            "commandEditors" : cfg.commandEditors ? cfg.commandEditors : commandEditors, 
+            "dragThrottle": cfg.dragThrottle ? dragThrottle : 80
+        }
+        
+        for ( var i = 0; i < pathObject.length; i++) {
+            var cmd = pathObject[i]; 
+            var cmdEditShape = buildPathCmdEditorFor(context, cmd); 
+        }
+        context['editorSet']=editorSet;
+        
+        //build legend set
+        var y = 10; 
+        for(var i in context.commandEditors) {
+            paper.circle(10, y, 5).attr({fill: context.commandEditors[i]["bgColor"]}); 
+            paper.text(30, y, context.commandEditors[i]["description"]).attr({"text-anchor": "start"}); 
+            y+=25; 
+        }
+        context['legendSet']=legendSet;
+        
+        var ctx = new EditorContext(context); 
+        this.__editorCtx=ctx;        
+        return ctx; 
+    }; 
+        
     var buildPathCmdEditorFor = function(context, cmd) {
         if(!cmd ||cmd.length<1)
             return; 
@@ -108,6 +139,15 @@ pathEd.setChangeEvent(function(ctx){
             return buildQCurveToCmdEditor(context, cmd);
         }
     }; 
+    
+
+    var createCmdShape = function(center, context, cmd, shapeType) {
+    	var shape = context.shape.paper.circle(center[0], center[1], 5).attr({
+    		fill: context.commandEditors[shapeType]["bgColor"]
+    	});
+    	return shape;
+    }; 
+   
     
     //L - lineto
     var buildLineToCmdEditor = function(context, cmd) {
@@ -271,13 +311,6 @@ pathEd.setChangeEvent(function(ctx){
         return set;
     }; 
     
-    var createCmdShape = function(center, context, cmd, shapeType) {
-    	var shape = context.shape.paper.circle(center[0], center[1], 5).attr({
-    		fill: context.commandEditors[shapeType]["bgColor"]
-    	});
-    	return shape;
-    }; 
-   
     
     //S - smooth curveto
     var buildSCurveToCmdEditor = function(context, cmd) {
