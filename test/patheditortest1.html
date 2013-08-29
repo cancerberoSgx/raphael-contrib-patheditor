@@ -6,19 +6,73 @@
 
 <title>raphael-contrib-patheditor test</title>
 
+<script src="jquery/jquery-2.0.3.min.js" type="text/javascript"></script>
+
 <script src="raphael/raphael-min.js" type="text/javascript"></script>
 <script src="../src/raphael-patheditor.js" type="text/javascript"></script>
 
+<style type="text/css">
+table{width: 100%;}
+textarea{width: 100%; }
+</style>
 </head>
 
 <body>
 
+	
+	<table>
+	<tr>
+	<td  valign="top">	
 	<div id="paper1"></div>
+	</td>
+	<td valign="top">
+	
+	<textarea id="addCommandTextarea">{index: 5, cmd: ['L', 100, 120] }</textarea>
+	<button id="addCommandButton">addCommandButton</button>
+		
+<!-- 	<textarea id="addCommandTextarea2"></textarea> -->
+	<button id="uninstallButton">uninstall</button>
+	<button id="installButton">install again</button>
+	</td>
+		
+<!-- 	<td> -->
+<!-- 	<textarea id="addCommandTextarea3"></textarea> -->
+<!-- 	<button id="addCommandButton3">addCommandButton3</button> -->
+<!-- 	</td> -->
+	</tr>
+	</table>
 
 	<script type="text/javascript">
-	var paper = Raphael("paper1", 500, 500); 
+	var paper = Raphael("paper1", 480, 600); 
 	var path = paper.path("M431,52L252,27L302,94M35,160V77L188,94L129,44H230L361,185C369,241,202,213,181,269S129,232,73,296Z"); 
 	var pathEd = path.installPathEditor(); 
+	
+	jQuery('#addCommandButton').click(function(ev){
+		var val = jQuery('#addCommandTextarea').val(), cmd = null, errmsg=null; 
+// 		console.log(va); 
+		try {
+			cmd = eval('(' + val + ')'); 
+		}
+		catch(e){
+			errmsg="Error parsing your json. cause: "+e+"\njson:"+val;
+// 			alert("Error parsing your json. cause: "+e+"\njson:"+val); 
+		}		
+		if(!cmd)
+			errmsg="Error parsing your json. cause: "+e+"\njson:"+val;
+		
+		if(errmsg)
+			alert(errmsg);
+		
+		pathEd.createNewCommand(cmd);
+	}); 
+	
+	jQuery('#uninstallButton').click(function(ev){
+		var oldEd = path.uninstallPathEditor();
+	}); 
+	jQuery('#installButton').click(function(ev){
+		pathEd = path.installPathEditor(); 
+	}); 
+	
 	</script>
 
 </body>
